@@ -7,13 +7,15 @@ require('./db/conn')
 const User = require('./models/user')   
 // const router = require('./routes/userRoute')
 const bcrypt =require('bcryptjs')
+const cookieParser = require('cookie-parser')
+const auth = require('./middleware/auth')
 
 
 const port = process.env.PORT || 4000
 
 app.use(express.json()); 
 app.use(express.urlencoded({extended:false}));
-
+app.use(cookieParser())
 
 const staticPath = path.join(__dirname,'../')
 app.use(express.static(staticPath)); //isse hum koi bhi static file run krwa skte hai
@@ -34,20 +36,42 @@ app.set('env development');
 // app.use(router)
 
 
-console.log(process.env.SECRET_KEY)
+// console.log(process.env.SECRET_KEY)
 // console.log(process.env.SECRET)
 
 app.get('/', (req, res) =>{
-    res.render('register')
+    res.render('home')
 })
+// app.get('/home', (req, res) =>{
+//     res.render('home')
+// })
 app.get('/login', (req, res) =>{
     res.render('login')
 })
-app.get('/home', (req, res) =>{
-    res.render('home')
+app.get('/logout', auth ,async(req, res) =>{
+    try {
+        //for logging out single user 
+        req.user.tokens = req.user.tokens.filter((currElem)=>{
+            return currElem.token !== req.token
+        })
+
+        //for logging out all logged in  user 
+        // req.user.tokens=[]
+
+        
+        res.clearCookie('jwt')
+        console.log('Successfully logout')
+        await req.user.save()
+        res.render('login')
+    } catch (error) {
+        res.status(404).send(error)
+    }
 })
 app.get('/register', (req, res) =>{
     res.render('register')
+})
+app.get('/secret',auth, (req, res) =>{
+    res.render('secret')
 })
 
 app.post("/register",async(req, res) => {
@@ -70,6 +94,13 @@ app.post("/register",async(req, res) => {
 
             const token = await registerUser.generateAuthToken()
             console.log(token);
+
+            res.cookie("jwt", token,{
+                expires: new Date(Date.now()+90000), //90sec
+                httpOnly: true,
+                // secure: true     //https pr hi chale uske liye 
+            })
+            console.log(cookie)
 
             const registered = await registerUser.save()
             res.status(200).render('home')
@@ -99,6 +130,15 @@ app.post('/login',async (req, res) => {
 
         const token = await userEmail.generateAuthToken()
         console.log(token)
+
+        res.cookie("jwt", token,{
+            expires: new Date(Date.now()+90000), //90sec
+            httpOnly: true,
+                // secure: true     //https pr hi chale uske liye 
+            })
+        // console.log(cookie)
+
+        // console.log(`This is cookie : ${ req.cookies.jwt}`)
 
     
         if(isMatch){

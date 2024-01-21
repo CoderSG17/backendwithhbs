@@ -5,7 +5,8 @@
 body {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    /* height: 100vh; */
+    width: 100vw;
 }
 
 .navbar{
@@ -39,9 +40,17 @@ body {
     align-items: center;
     padding-left:80px ;
 }
+.links{
+    /* border: 1px solid red; */
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 80px;
+}
 
 .right a{
-    padding:0px 40px;
+    padding:0px 30px;
     text-decoration: none;
 }
 .right a:active{
